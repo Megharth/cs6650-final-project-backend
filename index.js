@@ -1,10 +1,13 @@
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
 const bodyParser = require('body-parser');
+const cors = require('cors');
+
 require('dotenv').config();
 
 const app = new express();
 app.use(bodyParser.json());
+app.use(cors());
 
 const port = 8000;
 
