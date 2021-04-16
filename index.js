@@ -2,6 +2,7 @@ const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
 
 require('dotenv').config();
 
@@ -10,6 +11,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 const port = 8000;
+const salt = 10;
 
 let users;
 let db;
@@ -30,7 +32,8 @@ const init = async() => {
         const {email, password} = req.body;
         const [user] = await users.find({email}).toArray();
         if(user) {
-            if(user.password === password)
+            const match = await bcrypt.compare(password, user.password);
+            if(match)
                 res.json({message: `Success`, status: 200});
             else
                 res.json({message: 'Invalid credentials', status: 401});
@@ -44,11 +47,12 @@ const init = async() => {
     
     app.post('/register', async (req, res) => {
         const {email, password} = req.body;
+        const hash = await bcrypt.hash(password, salt);
         const [user] = await users.find({email}).toArray();
         if(user) {
             res.json({message: `User with email ${email} already registered`, status: 403});
         } else {
-            users.insertOne({email, password});
+            users.insertOne({email, password: hash});
             res.json({message: `Registered new user ${email}`, status: 200});
         }
     });
