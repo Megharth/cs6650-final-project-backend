@@ -51,8 +51,37 @@ const serverInit = async(port) => {
         if(user) {
             res.json({message: `User with email ${email} already registered`, status: 403});
         } else {
-            users.insertOne({email, password: hash});
+            users.insertOne({email, password: hash, name: null});
             res.json({message: `Registered new user ${email}`, status: 200});
+        }
+    });
+
+    app.get('/users', async(req, res) => {
+        const result = await users.find().toArray();
+        res.json({users: result});
+    });
+
+    app.get('/user/:email', async (req, res) => {
+        const {email} = req.params;
+        const [user] = await users.find({email}).toArray(); 
+        if(user) {
+            if(user.name) {
+                res.json({name: user.name, message: 'Success', status: 200});
+            } else {
+                res.json({name: null, message: 'Success', status: 200});
+            }
+        } else 
+            res.json({message: `could not find user with ${email}`, status: 404});      
+    });
+
+    app.post('/updateName', async (req, res) => {
+        const {email, name} = req.body;
+        const [user] = await users.find({email}).toArray(); 
+        if(user) {
+            await users.updateOne({email}, {$set: {name}});
+            res.json({message: `Successfully updated the name`, status: 200});
+        } else {
+            res.json({message: `could not find user with ${email}`, status: 404});
         }
     });
 }
