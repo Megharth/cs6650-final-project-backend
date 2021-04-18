@@ -1,4 +1,4 @@
-const socketInit = async (port) => {
+const socketInit = async (port, users) => {
     const io = require('socket.io')(port, {
         cors: {
             origin: '*'
@@ -14,17 +14,18 @@ const socketInit = async (port) => {
     });
 
     io.on('connection', (socket) => {
-        const users = {};
         console.log(`-- New user connected: ${socket.email}`);
+        socket.join(socket.email);
         for(let [id, socket] of io.of('/').sockets) {
-            users[socket.email] = id;
+            users.addUser(socket.email);
         }
         socket.emit('users', users);
         socket.broadcast.emit('new connection', {email: socket.email, id: users[socket.email]});
 
         socket.on('disconnect', () => {
             console.log(`${socket.email} disconnected`);
-            delete users[socket.email];
+            // delete users[socket.email];
+            users.removeUser(socket.email);
             socket.broadcast.emit('user disconnected', socket.email);
         });
 
@@ -34,9 +35,7 @@ const socketInit = async (port) => {
                 from: socket.email,
             })
         })
-    });
-
-    
+    });    
 }
 
 module.exports = {socketInit};

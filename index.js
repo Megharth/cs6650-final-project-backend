@@ -1,7 +1,9 @@
 const {serverInit} = require('./server');
 const {socketInit} = require('./socketServer');
+const User = require('./User');
 const serverPort = 8000;
 const socketPort = 8080;
 
-serverInit(serverPort);
-socketInit(socketPort);
+const user = new User();
+serverInit(serverPort, user);
+socketInit(socketPort, user);

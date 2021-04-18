@@ -28,15 +28,6 @@ const init = async () => {
         password: user.login.password
     }));
 
-    // const dbUsers = data.results.map(async (user) => {
-    //     const hash = await bcrypt.hash(user.login.password, 10);
-    //     return {
-    //         name: `${user.name.first} ${user.name.last}`,
-    //         email: user.email,
-    //         password: hash
-    //     }
-    // });
-
     const dbUsers = [];
     await asyncForEach(data.results, async (user) => {
         const hash = await bcrypt.hash(user.login.password, 10);
@@ -46,7 +37,7 @@ const init = async () => {
             password: hash
         });
     })
-    
+
     fs.writeFileSync('users.json', JSON.stringify(users));
     await collection.insertMany(dbUsers);
 

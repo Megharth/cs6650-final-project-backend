@@ -15,7 +15,7 @@ const salt = 10;
 let users;
 let db;
 
-const serverInit = async(port) => {
+const serverInit = async(port, userInstance) => {
     const client = new MongoClient(process.env.DB_URL);
     client.connect(() => { 
         console.log('connected to DB'); 
@@ -57,8 +57,13 @@ const serverInit = async(port) => {
     });
 
     app.get('/users', async(req, res) => {
+        const onlineUsers = new Set(userInstance.getUsers());
         const result = await users.find().toArray();
-        res.json({users: result});
+        const processedData = result.map(user => ({
+            ...user,
+            online: onlineUsers.has(user.email)
+        }));
+        res.json({users: processedData});
     });
 
     app.get('/user/:email', async (req, res) => {
