@@ -1,5 +1,4 @@
 const express = require('express');
-const MongoClient = require('mongodb').MongoClient;
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -12,16 +11,8 @@ app.use(cors());
 
 const salt = 10;
 
-let users;
-let db;
-
-const serverInit = async(port, userInstance) => {
-    const client = new MongoClient(process.env.DB_URL);
-    client.connect(() => { 
-        console.log('connected to DB'); 
-        db = client.db('cs6650');
-        users = db.collection('users');
-    });
+const serverInit = async(port, userInstance, db) => {
+    
 
     app.listen(port, () => {
         console.log(`listening on ${port}`);
@@ -29,7 +20,7 @@ const serverInit = async(port, userInstance) => {
     
     app.post('/login', async (req, res) => {
         const {email, password} = req.body;
-        const [user] = await users.find({email}).toArray();
+        const [user] = await db.findUsers(email);
         if(user) {
             const match = await bcrypt.compare(password, user.password);
             if(match)
@@ -47,18 +38,18 @@ const serverInit = async(port, userInstance) => {
     app.post('/register', async (req, res) => {
         const {email, password} = req.body;
         const hash = await bcrypt.hash(password, salt);
-        const [user] = await users.find({email}).toArray();
+        const [user] = await db.findUsers(email);
         if(user) {
             res.json({message: `User with email ${email} already registered`, status: 403});
         } else {
-            users.insertOne({email, password: hash, name: null});
+            await db.insertUser({email, password: hash, name: null})
             res.json({message: `Registered new user ${email}`, status: 200});
         }
     });
 
     app.get('/users', async(req, res) => {
         const onlineUsers = new Set(userInstance.getUsers());
-        const result = await users.find().toArray();
+        const result = await db.findUsers();
         const processedData = result.map(user => ({
             ...user,
             online: onlineUsers.has(user.email)
@@ -68,7 +59,7 @@ const serverInit = async(port, userInstance) => {
 
     app.get('/user/:email', async (req, res) => {
         const {email} = req.params;
-        const [user] = await users.find({email}).toArray(); 
+        const [user] = await db.findUser(email);
         if(user) {
             if(user.name) {
                 res.json({name: user.name, message: 'Success', status: 200});
@@ -81,9 +72,9 @@ const serverInit = async(port, userInstance) => {
 
     app.post('/updateName', async (req, res) => {
         const {email, name} = req.body;
-        const [user] = await users.find({email}).toArray(); 
+        const [user] = await db.findUser(email);
         if(user) {
-            await users.updateOne({email}, {$set: {name}});
+            await db.updateUser({email}, {$set: {name}});
             res.json({message: `Successfully updated the name`, status: 200});
         } else {
             res.json({message: `could not find user with ${email}`, status: 404});
