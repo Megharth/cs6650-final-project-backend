@@ -80,6 +80,13 @@ const serverInit = async(port, userInstance, db) => {
             res.json({message: `could not find user with ${email}`, status: 404});
         }
     });
+
+    app.get('/chats/:email', async(req, res) => {
+        const {email} = req.params;
+        const messages = await db.getMessages(email);
+
+        res.json({messages, status: 200});
+    })
 }
 
 module.exports = {serverInit};

@@ -1,4 +1,6 @@
-const socketInit = async (port, users) => {
+const { Db } = require('mongodb');
+
+const socketInit = async (port, users, db) => {
     const io = require('socket.io')(port, {
         cors: {
             origin: '*'
@@ -29,8 +31,8 @@ const socketInit = async (port, users) => {
             socket.broadcast.emit('user disconnected', socket.email);
         });
 
-        socket.on('message', ({message, to}) => {
-            console.log(message)
+        socket.on('message', async ({message, to}) => {
+            await db.insertMessage(message);
             socket.to(to).emit('message', {
                 message,
                 from: socket.email,

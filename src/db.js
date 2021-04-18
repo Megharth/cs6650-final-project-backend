@@ -8,6 +8,7 @@ class DB {
             console.log('connected to DB'); 
             this.db = this.client.db('cs6650');
             this.users = this.db.collection('users');
+            this.messages = this.db.collection('messages');
         });
     }
 
@@ -22,6 +23,15 @@ class DB {
 
     updateUser = async(user) => {
         await this.users.updateOne(user);
+    }
+
+    insertMessage = async(message) => {
+        await this.messages.insertOne(message);
+    }
+
+    getMessages = async(user) => {
+        const response = await this.messages.find({$or: [{sender: user}, {receiver: user}]}).toArray();
+        return response;
     }
 
 }
