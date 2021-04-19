@@ -49,12 +49,23 @@ const serverInit = async(port, userInstance, db) => {
 
     app.get('/users', async(req, res) => {
         const onlineUsers = new Set(userInstance.getUsers());
-        const result = await db.findUsers();
-        const processedData = result.map(user => ({
-            ...user,
-            online: onlineUsers.has(user.email)
+        const users = await db.findUsers();
+        const rooms = await db.findRooms();
+
+        const userData = users.map(({email, name, room}) => ({
+            email,
+            name,
+            room,
+            online: onlineUsers.has(email)
         }));
-        res.json({users: processedData});
+
+        const roomData = rooms.map(room => ({
+            ...room,
+            online: false
+        }));
+
+        console.log(roomData);
+        res.json({users: [...userData, ...roomData]});
     });
 
     app.get('/user/:email', async (req, res) => {
@@ -94,12 +105,8 @@ const serverInit = async(port, userInstance, db) => {
 
     app.post('/createRoom', async(req, res) => {
         const {email, name, user} = req.body;
-        // const response = await db.insertRoom({email, name});
-        // if(response === 0){
-            
-        // }
-        // else
-        //     res.json({message: 'Please try again', status: 500});
+        
+        await db.insertRoom({email, name, room: true});
 
         const [userObj] = await db.findUsers({email: user});
         if(userObj["chats"])

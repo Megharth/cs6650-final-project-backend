@@ -43,6 +43,10 @@ class DB {
         return 0;
     }
 
+    findRooms = async() => {
+        const result = await this.rooms.find().toArray();
+        return result;
+    }
 
 
 }
