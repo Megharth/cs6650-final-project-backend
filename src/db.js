@@ -9,11 +9,12 @@ class DB {
             this.db = this.client.db('cs6650');
             this.users = this.db.collection('users');
             this.messages = this.db.collection('messages');
+            this.rooms = this.db.collection('rooms');
         });
     }
 
-    findUsers = async (email = null) => {
-        const results = email ? await this.users.find({email}).toArray() : await this.users.find().toArray();
+    findUsers = async (users = null) => {
+        const results = users ? await this.users.find(users).toArray() : await this.users.find().toArray();
         return results;
     }
 
@@ -21,8 +22,8 @@ class DB {
         await this.users.insertOne(user);
     }
 
-    updateUser = async(user) => {
-        await this.users.updateOne(user);
+    updateUser = async(email, update) => {
+        await this.users.updateOne({email}, update);
     }
 
     insertMessage = async(message) => {
@@ -33,6 +34,16 @@ class DB {
         const response = await this.messages.find({$or: [{sender: user}, {receiver: user}]}).toArray();
         return response;
     }
+
+    insertRoom = async(room) => {
+        const result = await this.rooms.findOne({code: room.code});
+        if(result)
+            return -1;
+        await this.rooms.insertOne(room);
+        return 0;
+    }
+
+
 
 }
 

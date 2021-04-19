@@ -20,7 +20,7 @@ const serverInit = async(port, userInstance, db) => {
     
     app.post('/login', async (req, res) => {
         const {email, password} = req.body;
-        const [user] = await db.findUsers(email);
+        const [user] = await db.findUsers({email});
         if(user) {
             const match = await bcrypt.compare(password, user.password);
             if(match)
@@ -38,7 +38,7 @@ const serverInit = async(port, userInstance, db) => {
     app.post('/register', async (req, res) => {
         const {email, password} = req.body;
         const hash = await bcrypt.hash(password, salt);
-        const [user] = await db.findUsers(email);
+        const [user] = await db.findUsers({email});
         if(user) {
             res.json({message: `User with email ${email} already registered`, status: 403});
         } else {
@@ -59,7 +59,7 @@ const serverInit = async(port, userInstance, db) => {
 
     app.get('/user/:email', async (req, res) => {
         const {email} = req.params;
-        const [user] = await db.findUser(email);
+        const [user] = await db.findUsers({email});
         if(user) {
             if(user.name) {
                 res.json({name: user.name, message: 'Success', status: 200});
@@ -74,7 +74,7 @@ const serverInit = async(port, userInstance, db) => {
         const {email, name} = req.body;
         const [user] = await db.findUser(email);
         if(user) {
-            await db.updateUser({email}, {$set: {name}});
+            await db.updateUser(email, {$set: {name}});
             res.json({message: `Successfully updated the name`, status: 200});
         } else {
             res.json({message: `could not find user with ${email}`, status: 404});
@@ -84,8 +84,50 @@ const serverInit = async(port, userInstance, db) => {
     app.get('/chats/:email', async(req, res) => {
         const {email} = req.params;
         const messages = await db.getMessages(email);
+        const [user] = await db.findUsers(email);
+        const chatList = user.chats;
+        res.json({chatList, messages, status: 200});
+    });
 
-        res.json({messages, status: 200});
+    app.post('/createRoom', async(req, res) => {
+        const {code, name, user} = req.body;
+        const response = await db.insertRoom({code, name});
+        if(response === 0){
+            const [userObj] = await db.findUsers({user});
+            let rooms = [];
+            if(userObj['rooms']){ 
+                rooms = userObj['rooms'];
+            }
+            rooms.push(code);
+
+            console.log(userObj);
+            await db.updateUser(user, {$set: {
+                rooms
+            }});
+            res.json({message: 'success', status: 200});
+        }
+        else
+            res.json({message: 'Please try again', status: 500});
+    });
+
+    app.post('/addToChat', async(req, res) => {
+        const {sender, receiver} = req.body;
+        const [user1, user2] = await db.findUsers({email: {$in: [sender, receiver]}});
+
+        if(user1["chats"])
+            user1["chats"].push({name: user2.name, email: user2.email, room: user2.room});
+        else
+            user1["chats"] = [{name: user2.name, email: user2.email, room: user2.room}];
+        
+        if(user2["chats"])
+            user2["chats"].push({name: user1.name, email: user1.email, room: user1.room});
+        else
+            user2["chats"] = [{name: user1.name, email: user1.email, room: user1.room}];
+
+        await db.updateUser(sender, {$set: {chats: user1.chats}}, {$upsert: true});
+        await db.updateUser(receiver, {$set: {chats: user2.chats}}, {$upsert: true});
+
+        res.json({message: 'success', status: 200});
     })
 }
 

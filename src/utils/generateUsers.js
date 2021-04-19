@@ -25,7 +25,7 @@ const init = async () => {
     const users = data.results.map(user => ({
         name: `${user.name.first} ${user.name.last}`,
         email: user.email,
-        password: user.login.password
+        password: user.login.password,
     }));
 
     const dbUsers = [];
@@ -34,7 +34,8 @@ const init = async () => {
         dbUsers.push({
             name: `${user.name.first} ${user.name.last}`,
             email: user.email,
-            password: hash
+            password: hash,
+            room: false
         });
     })
 

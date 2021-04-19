@@ -17,7 +17,9 @@ const socketInit = async (port, users, db) => {
 
     io.on('connection', (socket) => {
         console.log(`-- New user connected: ${socket.email}`);
+        
         socket.join(socket.email);
+        
         for(let [id, socket] of io.of('/').sockets) {
             users.addUser(socket.email);
         }
@@ -33,6 +35,7 @@ const socketInit = async (port, users, db) => {
 
         socket.on('message', async ({message, to}) => {
             await db.insertMessage(message);
+            
             socket.to(to).emit('message', {
                 message,
                 from: socket.email,
