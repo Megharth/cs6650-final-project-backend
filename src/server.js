@@ -84,30 +84,32 @@ const serverInit = async(port, userInstance, db) => {
     app.get('/chats/:email', async(req, res) => {
         const {email} = req.params;
         const messages = await db.getMessages(email);
-        const [user] = await db.findUsers(email);
-        const chatList = user.chats;
+        const [user] = await db.findUsers({email});
+
+        const onlineUsers = new Set(userInstance.getUsers());
+        const chatList = user.chats.map(user => ({...user, online: onlineUsers.has(user.email)}));
+
         res.json({chatList, messages, status: 200});
     });
 
     app.post('/createRoom', async(req, res) => {
-        const {code, name, user} = req.body;
-        const response = await db.insertRoom({code, name});
-        if(response === 0){
-            const [userObj] = await db.findUsers({user});
-            let rooms = [];
-            if(userObj['rooms']){ 
-                rooms = userObj['rooms'];
-            }
-            rooms.push(code);
+        const {email, name, user} = req.body;
+        // const response = await db.insertRoom({email, name});
+        // if(response === 0){
+            
+        // }
+        // else
+        //     res.json({message: 'Please try again', status: 500});
 
-            console.log(userObj);
-            await db.updateUser(user, {$set: {
-                rooms
-            }});
-            res.json({message: 'success', status: 200});
-        }
+        const [userObj] = await db.findUsers({email: user});
+        if(userObj["chats"])
+            userObj["chats"].push({name, email, room: true});
         else
-            res.json({message: 'Please try again', status: 500});
+            userObj["chats"] = [{name, email, room: true}];
+
+        await db.updateUser(user, {$set: {chats: userObj.chats}}, {$upsert: true});
+        
+        res.json({message: 'success', status: 200});
     });
 
     app.post('/addToChat', async(req, res) => {
