@@ -64,7 +64,6 @@ const serverInit = async(port, userInstance, db) => {
             online: false
         }));
 
-        console.log(roomData);
         res.json({users: [...userData, ...roomData]});
     });
 
@@ -83,7 +82,7 @@ const serverInit = async(port, userInstance, db) => {
 
     app.post('/updateName', async (req, res) => {
         const {email, name} = req.body;
-        const [user] = await db.findUser(email);
+        const [user] = await db.findUsers(email);
         if(user) {
             await db.updateUser(email, {$set: {name}});
             res.json({message: `Successfully updated the name`, status: 200});
@@ -94,13 +93,18 @@ const serverInit = async(port, userInstance, db) => {
 
     app.get('/chats/:email', async(req, res) => {
         const {email} = req.params;
-        const messages = await db.getMessages(email);
         const [user] = await db.findUsers({email});
 
-        const onlineUsers = new Set(userInstance.getUsers());
-        const chatList = user.chats.map(user => ({...user, online: onlineUsers.has(user.email)}));
+        if(user.chats) {
+            const onlineUsers = new Set(userInstance.getUsers());
+            const chatList = user.chats.map(user => ({...user, online: onlineUsers.has(user.email)}));
+            const rooms = user.chats.filter(chat => chat.room).map(room => room.email);
+            const messages = await db.getMessages(email, rooms);
 
-        res.json({chatList, messages, status: 200});
+            res.json({chatList, messages, status: 200});
+        } else {
+            res.json({chatList: [], messages: [], status: 200});
+        }
     });
 
     app.post('/createRoom', async(req, res) => {
@@ -137,7 +141,22 @@ const serverInit = async(port, userInstance, db) => {
         await db.updateUser(receiver, {$set: {chats: user2.chats}}, {$upsert: true});
 
         res.json({message: 'success', status: 200});
-    })
+    });
+
+    app.post('/addRoom', async(req, res) => {
+        const {room, email} = req.body;
+        const [user] = await db.findUsers({email});
+        if(user.chats) {
+            const {chats} = user;
+            chats.push(room);
+            await db.updateUser(email, {$set: {chats}});
+
+        } else {
+            const chats = [room];
+            await db.updateUser(email, {$set: {chats}}, {$upsert: true});
+        }
+        res.json({message: 'success', status: 200});
+    });
 }
 
 module.exports = {serverInit};

@@ -15,14 +15,21 @@ const socketInit = async (port, users, db) => {
         next();
     });
 
-    io.on('connection', (socket) => {
+    io.on('connection', async (socket) => {
         console.log(`-- New user connected: ${socket.email}`);
-        
+        const [user] = await db.findUsers({email: socket.email});
+
         socket.join(socket.email);
-        
+
+        if(user.chats) {
+            const rooms = user.chats.filter(chat => chat.room)
+            rooms.forEach(room => socket.join(room.email));
+        }
+
         for(let [id, socket] of io.of('/').sockets) {
             users.addUser(socket.email);
         }
+
         socket.emit('users', users);
         socket.broadcast.emit('new connection', {email: socket.email, id: users[socket.email]});
 
@@ -39,8 +46,16 @@ const socketInit = async (port, users, db) => {
             socket.to(to).emit('message', {
                 message,
                 from: socket.email,
-            })
-        })
+            });
+        });
+
+        socket.on('groupMessage', async ({message, to}) => {
+            await db.insertMessage(message);
+            socket.to(to).emit('groupMessage', {
+                message, 
+                from: to,
+            });
+        });
     });    
 }
 

@@ -30,8 +30,8 @@ class DB {
         await this.messages.insertOne(message);
     }
 
-    getMessages = async(user) => {
-        const response = await this.messages.find({$or: [{sender: user}, {receiver: user}]}).toArray();
+    getMessages = async(user, rooms) => {
+        const response = await this.messages.find({$or: [{sender: user}, {receiver: {$in: [user, ...rooms]}}]}).toArray();
         return response;
     }
 
