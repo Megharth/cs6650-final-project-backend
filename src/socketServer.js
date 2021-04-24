@@ -42,7 +42,7 @@ const socketInit = async (port, users, db) => {
 
         socket.on('message', async ({message, to}) => {
             await db.insertMessage(message);
-            
+
             socket.to(to).emit('message', {
                 message,
                 from: socket.email,
@@ -52,11 +52,22 @@ const socketInit = async (port, users, db) => {
         socket.on('groupMessage', async ({message, to}) => {
             await db.insertMessage(message);
             socket.to(to).emit('groupMessage', {
-                message, 
+                message,
                 from: to,
             });
         });
-    });    
+
+        ///// timesync in place on backend side ////
+        socket.on('timesync', function (data) {
+          //console.log('message', data);
+          socket.emit('timesync', {
+            // Change to month/date/year hour/min/sec date/time format
+            time: Date.now()
+          });
+        });
+        ///////////////////////////////////////////
+
+    });
 }
 
 module.exports = {socketInit};
