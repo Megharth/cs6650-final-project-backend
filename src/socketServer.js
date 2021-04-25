@@ -1,12 +1,11 @@
-const { Db } = require('mongodb');
-
-const socketInit = async (port, users, db) => {
+const socketInit = async (port, users, db, ts) => {
     const io = require('socket.io')(port, {
         cors: {
             origin: '*'
         }
     });
 
+    console.log(`Listening for sockets on ${port}`)
     io.use((socket, next) => {
         const {email} = socket.handshake.auth
         if(!email)
@@ -64,10 +63,12 @@ const socketInit = async (port, users, db) => {
         ///// timesync in place on backend side ////
         socket.on('timesync', function (data) {
           //console.log('message', data);
-          socket.emit('timesync', {
-            // Change to month/date/year hour/min/sec date/time format
-            time: Date.now()
-          });
+            ts.sync();
+            
+            socket.emit('timesync', {
+                // Change to month/date/year hour/min/sec date/time format
+                time: ts.now()
+            });
         });
         ///////////////////////////////////////////
 
