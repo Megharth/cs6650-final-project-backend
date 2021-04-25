@@ -57,6 +57,10 @@ const socketInit = async (port, users, db) => {
             });
         });
 
+        socket.on('joinRoom', async({roomCode}) => {
+            socket.join(roomCode);
+        })
+
         ///// timesync in place on backend side ////
         socket.on('timesync', function (data) {
           //console.log('message', data);
