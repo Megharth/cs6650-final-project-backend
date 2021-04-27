@@ -14,6 +14,15 @@ const ts = timesync.create({
     interval: 1000,
 });
 
+ts.on('error', (err) => {
+    const error = err.message.split(' ');
+    if(error[1] === 'ECONNREFUSED'){
+        const port = error[error.length-1].split(':')[1];
+        const url = `http://localhost:${port}`;
+        console.log('Peer disconnected:', url);
+        ts.options.peers = ts.options.peers.filter(peer => peer !== url);
+    }
+})
 const user = new User();
 const db = new DB();
 serverInit(serverPort, user, db);
