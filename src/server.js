@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const fetch = require('node-fetch');
 
 require('dotenv').config();
 
@@ -11,13 +12,20 @@ app.use(cors());
 
 const salt = 10;
 
-const serverInit = async(port, userInstance, db) => {
+const serverInit = async(port, userInstance, db, peers, ts) => {
     
-
     app.listen(port, () => {
         console.log(`listening on ${port}`);
     });
     
+    app.post('/handshake', (req, res) => {
+        const {port} = req.body;
+        const url = `http://localhost:${port}`;
+        console.log(`handhsake successfull with peer ${url}`);
+        ts.options.peers = [...ts.options.peers, url];
+        res.json({message: 'success', status:200});
+    });
+
     app.post('/login', async (req, res) => {
         const {email, password} = req.body;
         const [user] = await db.findUsers({email});
@@ -157,6 +165,19 @@ const serverInit = async(port, userInstance, db) => {
         }
         res.json({message: 'success', status: 200});
     });
+
+    peers.forEach(peer => {
+  
+        if(peer.split(':')[2] !== port) {
+            fetch(peer + '/handshake', {
+                method: 'POST',
+                body: JSON.stringify({port}),
+                headers: {
+                    'Content-Type': 'Application/json'
+                }
+            })
+        }
+    })
 }
 
 module.exports = {serverInit};

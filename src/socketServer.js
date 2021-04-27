@@ -70,7 +70,10 @@ const socketInit = async (port, users, db, ts) => {
                 time: ts.now()
             });
         });
-        ///////////////////////////////////////////
+
+        socket.on('register', ({peer}) => {
+            console.log(`handshake successfull with peer ${peer}`);
+        })
 
     });
 }

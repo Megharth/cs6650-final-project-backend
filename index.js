@@ -9,10 +9,14 @@ const ports = [4000, 4020, 4040, 4060, 4080];
 const serverPort = parseInt(process.argv[2]);
 const socketPort = serverPort + 10;
 
+const peers = ports.filter((port) => port !== serverPort).map(port => `http://localhost:${port}`);
+    
 const ts = timesync.create({
-    peers: ports.filter((port) => port !== serverPort).map(port => `http://localhost:${port}`),
+    peers: [],
     interval: 1000,
 });
+
+// console.log(ts);
 
 ts.on('error', (err) => {
     const error = err.message.split(' ');
@@ -22,8 +26,9 @@ ts.on('error', (err) => {
         console.log('Peer disconnected:', url);
         ts.options.peers = ts.options.peers.filter(peer => peer !== url);
     }
-})
+});
+
 const user = new User();
 const db = new DB();
-serverInit(serverPort, user, db);
+serverInit(serverPort, user, db, peers, ts);
 socketInit(socketPort, user, db, ts);
