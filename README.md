@@ -1,4 +1,4 @@
-## Instructions for testing
+## Instructions for testing (with screenshots)
 
 https://docs.google.com/document/d/1MKWj9ST-vIQMSCrEq82BOAPZ__wjefZb0AVgSfJ429c/edit
 
