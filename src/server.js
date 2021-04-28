@@ -12,7 +12,7 @@ app.use(cors());
 
 const salt = 10;
 
-const serverInit = async(port, userInstance, db, peers, ts, logs) => {
+const serverInit = async(port, userInstance, db, peers, ts) => {
     let promiseVal = -1;
 
     app.listen(port, () => {
@@ -165,7 +165,10 @@ const serverInit = async(port, userInstance, db, peers, ts, logs) => {
             const chats = [room];
             await db.updateUser(email, {$set: {chats}}, {$upsert: true});
         }
-        res.json({message: 'success', status: 200});
+
+        const messages = await db.getMessages(room.email, [room.email]);
+
+        res.json({message: 'success', messages, status: 200});
     });
 
     // app.post('/propose', (req, res) => {

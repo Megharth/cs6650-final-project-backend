@@ -36,9 +36,7 @@ class DB {
     }
 
     insertRoom = async(room) => {
-        console.log(room);
         const result = await this.rooms.findOne({email: room.email});
-        console.log(result);
         if(result)
             return -1;
         await this.rooms.insertOne(room);

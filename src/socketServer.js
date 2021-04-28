@@ -8,7 +8,7 @@ const asyncForEach = async (array, callback) => {
     }
 }
 
-const socketInit = async (port, users, db, peers, ts, logs, redisClient) => {
+const socketInit = async (port, users, db, peers, ts, redisClient) => {
     const socketOnConnection = async (socket) => {
         console.log(`-- New user connected: ${socket.email}`);
         const [user] = await db.findUsers({email: socket.email});
@@ -78,7 +78,7 @@ const socketInit = async (port, users, db, peers, ts, logs, redisClient) => {
         // }
     
         // socket.emit('users', users);
-        // socket.broadcast.emit('new connection', {email: socket.email, id: users[socket.email]});
+        socket.broadcast.emit('new connection', {email: socket.email, id: users[socket.email]});
     
         socket.on('disconnect', () => {
             console.log(`${socket.email} disconnected`);
@@ -121,7 +121,11 @@ const socketInit = async (port, users, db, peers, ts, logs, redisClient) => {
     
         socket.on('register', ({peer}) => {
             console.log(`handshake successfull with peer ${peer}`);
-        })
+        });
+
+        socket.on('newRoomToUsers', (room) => {
+            socket.broadcast.emit('newRoomToUsers', room);
+        });
     
     }
 
