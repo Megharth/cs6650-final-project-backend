@@ -12,8 +12,9 @@ app.use(cors());
 
 const salt = 10;
 
-const serverInit = async(port, userInstance, db, peers, ts) => {
-    
+const serverInit = async(port, userInstance, db, peers, ts, logs) => {
+    let promiseVal = -1;
+
     app.listen(port, () => {
         console.log(`listening on ${port}`);
     });
@@ -56,7 +57,8 @@ const serverInit = async(port, userInstance, db, peers, ts) => {
     });
 
     app.get('/users', async(req, res) => {
-        const onlineUsers = new Set(userInstance.getUsers());
+        // console.log(userInstance.getUsers());
+        const onlineUsers = new Set(await userInstance.getUsers());
         const users = await db.findUsers();
         const rooms = await db.findRooms();
 
@@ -104,7 +106,7 @@ const serverInit = async(port, userInstance, db, peers, ts) => {
         const [user] = await db.findUsers({email});
 
         if(user.chats) {
-            const onlineUsers = new Set(userInstance.getUsers());
+            const onlineUsers = new Set(await userInstance.getUsers());
             const chatList = user.chats.map(user => ({...user, online: onlineUsers.has(user.email)}));
             const rooms = user.chats.filter(chat => chat.room).map(room => room.email);
             const messages = await db.getMessages(email, rooms);
@@ -166,17 +168,45 @@ const serverInit = async(port, userInstance, db, peers, ts) => {
         res.json({message: 'success', status: 200});
     });
 
+    // app.post('/propose', (req, res) => {
+    //     const {pid, port} = req.body;
+    //     if(parseInt(pid) > promiseVal) {
+    //         promiseVal = pid;
+    //         console.log(`preparing for the pid ${pid} from ${port}`);            
+    //         res.json({message: 'prepare', status: 200});
+    //     } else {
+    //         console.log(`cannot promise for ${pid} as already promised for ${promiseVal}`);
+    //     }   
+    // });
+
+    // app.post('/accept', (req, res) => {
+    //     const {pid, port} = req.body;
+    //     if(parseInt(pid) === promiseVal) {
+    //         console.log(`Accepting for the pid ${pid} from ${port}`);            
+    //         res.json({message: 'accept', data: logs.getLastLog(), status: 200});
+    //     } else {
+    //         console.log(`cannot accept for ${pid} as already promised for ${promiseVal}`);
+    //     }   
+    // });
+
+    // app.post('/learn', (req, res) => {
+    //     const {pid, data, port} = req.body;
+    //     if(parseInt(pid) === promiseVal) {
+    //         console.log(`learning from ${port}`, data);
+    //         res.json({message: 'success', status:200});
+    //     } else {
+    //         console.log(`cannot learn for ${pid} as already promised for ${promiseVal}`);
+    //     }
+    // });
+
     peers.forEach(peer => {
-  
-        if(peer.split(':')[2] !== port) {
-            fetch(peer + '/handshake', {
-                method: 'POST',
-                body: JSON.stringify({port}),
-                headers: {
-                    'Content-Type': 'Application/json'
-                }
-            })
-        }
+        fetch(peer + '/handshake', {
+            method: 'POST',
+            body: JSON.stringify({port}),
+            headers: {
+                'Content-Type': 'Application/json'
+            }
+        });
     })
 }
 

@@ -1,8 +1,12 @@
 const {serverInit} = require('./src/server');
 const {socketInit} = require('./src/socketServer');
-const User = require('./src/User');
+const RedisUserStore = require('./src/User');
+const Logs = require('./src/logs');
 const DB = require('./src/db');
 const timesync = require('timesync/dist/timesync');
+const ioredis = require('ioredis');
+
+const redisClient = new ioredis();
 
 const ports = [4000, 4020, 4040, 4060, 4080];
 
@@ -28,7 +32,9 @@ ts.on('error', (err) => {
     }
 });
 
-const user = new User();
+const user = new RedisUserStore(redisClient);
 const db = new DB();
-serverInit(serverPort, user, db, peers, ts);
-socketInit(socketPort, user, db, ts);
+const logs = new Logs();
+
+serverInit(serverPort, user, db, peers, ts, logs);
+socketInit(socketPort, user, db, peers, ts, logs, redisClient);

@@ -1,19 +1,27 @@
-class User {
-    constructor() {
-        this.users = new Set();
+class RedisUserStore {
+    constructor(redisClient) {
+        this.redisClient = redisClient;
+        // this.users = new Set();
     }
 
     addUser = (user) => {
-        this.users.add(user);
+        this.redisClient.multi()
+            .hset('users', user, 'connected')
+            .exec();
+        // this.users.add(user);
     }
 
     removeUser = (user) => {
-        this.users.delete(user);
+        this.redisClient.multi()
+            .hdel('users', user)
+        // this.users.delete(user);
     }
 
-    getUsers = () => {
-        return Array.from(this.users);
+    getUsers = async () => {
+        // return Array.from(this.users);
+        const users = await this.redisClient.hgetall('users');
+        return Object.keys(users);
     }
 }
 
-module.exports = User;
+module.exports = RedisUserStore;
