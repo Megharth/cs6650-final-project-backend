@@ -1,10 +1,14 @@
+## Instructions for testing
+
+https://docs.google.com/document/d/1MKWj9ST-vIQMSCrEq82BOAPZ__wjefZb0AVgSfJ429c/edit
+
 # Setting up the backend
 
 ## Packages
 
     npm install
 
-## MongoDB
+## MongoDB and .env file
 We use mongoDB for persistent data storage. The database stores data on users,
 chat rooms, and messages.
 
