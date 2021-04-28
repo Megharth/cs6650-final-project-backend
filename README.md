@@ -14,6 +14,10 @@ Create a .env file in the project directory with the following:
 
     DB_URL=mongodb+srv://admin:admin@cluster0.bxmbg.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
 
+We have already prepopulated the database with the users. You can use email and password in the users.json file to login as that user.
+If you choose to register a new user instead, then first set the name of the user from the accounts menu on bottom-left corner and then
+start chatting!
+
 ## Redis
 We use redis for replicated data management.
 
